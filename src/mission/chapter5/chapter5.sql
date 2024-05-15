@@ -6,9 +6,7 @@ ORDER BY um.updated_at DESC
 LIMIT 10 offset (n-1)*10;
 
 -- 2. 리뷰 작성하는 쿼리, 사진의 경우는 일단 배제
-store_id := SELECT store_id FROM store WHERE "가게명"
-user_id := SELECT user_id FROM user WHERE 
-INSERT INTO review values(1, store_id, user_id, 5.0, "맛있다ㅏ");
+INSERT INTO review values(1, "가게명", 1, 5.0, "맛있다ㅏ");
 
 -- 3. 홈 화면 쿼리 (현재 선택 된 지역에서 도전이 가능한 미션 목록, 페이징 포함)
 SELECT M.mission_id, M.point, DATEDIFF(M.due_date, NOW())
