@@ -1,6 +1,7 @@
-package com.example.umc.domain;
+package com.example.umc.domain.maaping;
 
 import com.example.umc.common.BaseEntity;
+import com.example.umc.domain.enums.MissionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,10 +10,12 @@ import lombok.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class region extends BaseEntity {
+public class MemberMission extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @Enumerated(EnumType.STRING)
+    private MissionStatus status;
 }
