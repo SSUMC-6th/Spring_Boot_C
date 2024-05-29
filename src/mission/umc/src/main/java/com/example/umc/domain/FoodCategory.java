@@ -1,8 +1,13 @@
 package com.example.umc.domain;
 
 import com.example.umc.common.BaseEntity;
+import com.example.umc.domain.maaping.MemberAgree;
+import com.example.umc.domain.maaping.MemberPrefer;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -17,4 +22,6 @@ public class FoodCategory extends BaseEntity {
 
     private String name;
 
+    @OneToMany(mappedBy = "foodCategory", cascade = CascadeType.ALL)
+    private List<MemberPrefer> categoryMemberPreferList = new ArrayList<>();
 }

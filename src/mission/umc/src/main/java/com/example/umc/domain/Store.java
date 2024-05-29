@@ -1,8 +1,12 @@
 package com.example.umc.domain;
 
 import com.example.umc.common.BaseEntity;
+import com.example.umc.domain.maaping.MemberAgree;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -19,4 +23,7 @@ public class Store extends BaseEntity {
     private String address;
 
     private Float score;
+
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
+    private List<Review> storeReviewList = new ArrayList<>();
 }

@@ -1,6 +1,9 @@
 package com.example.umc.domain.maaping;
 
 import com.example.umc.common.BaseEntity;
+import com.example.umc.domain.FoodCategory;
+import com.example.umc.domain.Member;
+import com.example.umc.domain.Mission;
 import com.example.umc.domain.enums.MissionStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,4 +21,12 @@ public class MemberMission extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private MissionStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mission_id")
+    private Mission mission;
 }
