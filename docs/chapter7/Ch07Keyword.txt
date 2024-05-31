@@ -1,0 +1,162 @@
+1. DTO
+- 계층 간 데이터를 교환하기 위해서 만든 객체
+- 데이터 객체를 Service, Controller 등으로 보낼 때/DB에서 데이터를 받아 전송할 때 사용
+- [클라이언트-Controller-Service-Repository-DB] 모든 단에서 DB의 원본데이터가 움직이는 게 아님
+- 중간의 [Controller - Service - Repository] 각 단계에서 데이터를 옮길 때는 원본 데이터, 엔티티 대신 DTO를 사용 == DTO에는 엔티티의 변수 중 그 때 그 때 필요한 것만 골라서 넣어 놓는다
+  ---> 외부에 노출되면 안 되거나 노출할 필요가 없는 정보를 배제함
+
+(1) dto 사용 X, 엔티티를 그대로 응답으로 넘겨주는 경우
+- 엔티티가 변경되어 새로운 필드가 추가되거나 기존의 필드가 삭제되는 상황 발생
+--> 요구사항이 변경되어 person 테이블에 address라는 필드가 추가되는 경우, login API처럼 address 필드가 필요 없는 상황에는 불필요한 데이터가 전송되는 격
+
+2. converter
+- entity to dto
+- 엔티티 생성
+- repository에서 받아온 엔티티를 dto로 변환
+- DB에 저장할 때는 DTO -> Entity로 변호환
+
+3. converter 사용 위치
+DB -> Repostiory -> Service -> Controller -> Client 과정을 데이터가 전달될 때
+
+(1) Service에서 dto 생성
+- Service 안에서 converter 동작, dto 리턴
+- 장점: Controller에 Entity 노출X -> 불필요한 데이터는 보이지X -> 보안 good
+- 단점: api 하나의 controller, service, repository를 각기 다른 사람이 만드는 경우, controller를 작업하는 사람은 dto만 볼 수 있음
+
+(2) Controller에서 dto 생성
+- Service에서 entity 리턴
+- Controller에서 converter 동작
+- 장점: Service는 dto를 다룰 때보다 더 넒은 범위의 데이터를 다룰 수 있음, 다수의 컨트롤러에서 동일한 엔티티가 필요한 경우에 재사용 용이
+
+4. @Builder
+- 빌더 패턴을 적용할 객체에 @Builder 어노테이션 달기
+- 객체를 생성할 때 필드 이름으로 값 세팅
+- 필드 순서 상관X
+- e.g.
+Review.builder()
+                .reviewContent(request.content())
+                .userStar(request.userStar())
+                .userYear(request.userYear())
+                .build();
+
+5. @NoArgsConstructor(accss = AccessLevel.PROTECTED)
+- Lombok 라이브러리
+- 파라미터가 없는 기본 생성자(@Entity에서도 만들어주긴 하지만 PROTECTED 설정하기 위해서 사용)
+- 클래스에 생성자가 없어도 인스턴스를 생성
+@NoArgsConstructor
+public class Person{
+	private String name;
+	private Integer age;
+}
+
+public class Person{
+	private String name;
+	private Integer age;
+
+	public Person() { }
+}
+- 기본 생성자의 접근 제어를 PROTECTED로 설정
+--> 기본 생성자의 무분별한 생성을 방지(불완전한 객체가 생성되지 않도록)
+- 
+* access = AccessLevel.PRIVATE 도 있음
+
+
+6. @AllArgsConstructor
+- Lombok 라이브러리
+- 모든 필드 값을 파라미터로 받는 생성자를 생성
+@AllArgsConstructor
+public class Person{
+	private String name;
+	private Integer age;
+}
+
+public class Person{
+	private String name;
+	private Integer age;
+
+	public Person(String name, itn age) {
+		this.name = name;
+		this.age = age;
+	}
+}
+
+
+7. 연관 관계 주인
+- 데이터베이스에서 외래키를 가지는 엔티티
+- mappedBy로 연관 관계 주인을 지정(주인은 mappedBy 속성 사용X)
+
+8. 단방향 매핑
+- 연관 관계 주인에게만 연관 관계 주입
+- 보통 @ManytoOne 사용하게 되는 경우
+- e.g., mission-memberMissoin 관계에서 memberMission에 해당
+
+9. 양방향 매핑
+- 연관 관계 주인이 아닌 엔티티(1:N에서 1에 해당하는)에도 연관 관계 주입
+- mappedBy 사용하여 연관 관계 주인을 지정
+- cascade 설정 가능
+- 보통 @OnetoMany를 사용하게 되는 경우
+- e.g., mission-memberMission 관계에서 mission에 해당, mission이 삭제 or 변경되면 memberMission도 삭제 or 변경되어야 함(cascade)
+
+* 연관 관계 편의 메서드
+- player-team 관계에서 아래와 같이 값을 세팅해주는 것이 안전함
+player.setTeam(team)	// player -> team 연관관계 설정 @ManytoOne
+team.getPlayerList().add(player)	// team -> player 연관관계 설정 @OnetoMany
+- 위 코드를 player와 team 중 한 쪽에서 한 번에 설정해주는 것이 연관 관계 편의 메서드
+public void setTeam(Team team){
+	this.team = team;
+	team.getPlayerList().add(this);
+} 이거!!!
+
+
+10. 지연 로딩
+- @ManytoOne의 fetch 속성
+- fetch = FetchType.LAZY
+- N:1 관계에서 1에 해당하는 엔티티를 조회하는 시점을 해당 객체가 실제로 사용될 때로 늦추는 것
+- e.g., member-team 관계(N:1)에서 member와 team 객체가 같이 사용되는 경우가 거의 없는 경우
+- member를 조회하고 나중에 필요한 경우 team을 조회함
+- 프록시 사용
+- 프록시로 객체에 대한 참조(target)만 보관 -> 이 후 실제로 그 객체가 필요한 시점이 되면 그제서야 실제 데이터베이스에서 조회
+
+11. 영속성 컨텍스트
+- JPA에서 엔티티를 영구적으로 저장, 관리하고 다루는 환경
+- application과 데이터베이스 사이에서 객체를 보관하는 개념
+- EntituManager를 통해 영속성 컨텍스트에 접근
+- 1차 캐시
+- 동일성 보장
+- 트랜잭션을 지원하는 쓰기 지연
+- 변경 감지
+- 지연 로딩
+
+* 엔티티의 생명주기
+- 비영속
+영속성 컨텍스트와 전혀 관계가 없는 상태
+Member member = new Member();
+- 영속
+영속성 컨텍스트에 관리되는 상태
+Member member = new Member();
+EntityManager entityManager = entityManagerFacatory.createEntityManager();
+entityManager.persist(member);	// 1차 캐시에 저장됨 -> DB에 접근하는 것보다 속도 빠름?
+- 준영속
+영속성 컨텍스트에 저장되었다가 분리된 상태
+Member member = new Member();
+EntityManager entityManager = entityManagerFacatory.createEntityManager();
+entityManager.detach(member);
+- 삭제
+Member member = new Member();
+EntityManager entityManager = entityManagerFacatory.createEntityManager();
+entityManager.remove(member);
+
+=====???
+- findById 같은 것도 DB가 아니라 영속성컨텍스트에서 조회하는 것인지?
+
+
+12. N+1 문제
+- 하나의 쿼리문(1)의 결과로 N개의 쿼리가 더 발생하는 문제
+- e.g., Team, Member 엔티티가 있을 때, Team에 소속되어 있는 Member를 조회하는 경우
+Team 엔티티 안에 List<Member> members 필드가 있으니까 TeamRepository.findAll()로 쿼리 하나만 날려도 Member가 조회되겠지?
+--> 까보면 SELECT * from TEAM 쿼리에 추가적으로 SELECT * from Member WHERE Team={1~N} 쿼리 N개가 나감 == N+1문제
+- 원인: 처음에 Team을 TeamRepository.findAll()로 조회하면 Jpql이 동작함. 테이블이 아니라 엔티티 객체를 대상으로 쿼리를 날리는 것이기 때문에 JPA가 엔티티를 매핑한 과정을 떠올리면 왜 N개의 쿼리를 추가로 날렸는지 알 수 있음.
+--> team 엔티티를 매핑하고, 각 team_id에 해당하는 FK를 가진 member 엔티티를 매핑하여 가져옴
+
+====??
+JPA는 왜 join을 안 쓰는가!!!!!!!!!!!!!!!1??대체왜why
