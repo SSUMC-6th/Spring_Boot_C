@@ -29,6 +29,137 @@
 
 
 
+
+# 예외 처리
+
+## 1. 스프링의 기본적인 예외 처리 방법
+
+spring에서 예외 처리를 위한 BasicErrorController를 구현해두었고 
+에러 발생 => /error 로 에러 요청을 다시 전달 하도록 WAS 설정이 되어 있다. 
+
+일반적인 요청 흐름
+WAS(톰캣) -> 필터 -> 서블릿(디스패처 서블릿) -> 인터셉터 -> 컨트롤러
+
+예외가 발생했을 때 
+예외처리를 하지 않으면 WAS까지 에러가 전달 된다. 
+
+"아 내가 대응 못하는 에러구나! 바로 error page"
+컨트롤러(예외 발생) -> 인터셉터 -> 서블릿(dispatcher 서블릿) -> 필터 -> WAS(톰캣)
+--여기까지 WAS까지 에러가 올라가는 것이고--
+
+이제 에러 페이지를 호출하기 위해서 아까 처음에 말했던 BasicErrorController를 호출한다. (이름 어렵지 안잖아~)
+
+> 그럼 요청이 2번 가는 것인가요?
+
+1번의 요청이 2번 전달 되는 것입니다~
+
+```java
+@Controller
+@RequestMapping("${server.error.path:${error.path:/error}}")
+public class BasicErrorController extends AbstractErrorController {
+
+    private final ErrorProperties errorProperties;
+    ...
+
+    @RequestMapping(produces = MediaType.TEXT_HTML_VALUE)
+    public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {
+        ...
+    }
+
+    @RequestMapping
+    public ResponseEntity<Map<String, Object>> error(HttpServletRequest request) {
+        ...
+        return new ResponseEntity<>(body, status);
+    }
+    
+    ...
+}
+
+```
+BasicErrorController는 accept 헤더에 따라 에러 페이지를 반환하거나 에러 메시지를 반환한다. 
+에러 경로는 기본적으로 /error로 정의되어 있으며 properties에서 server.error.path로 변경할 수 있다. 
+
+
+errorHtml()과 error()는 모두 getErrorAttributeOptions를 호출해 반환할 에러 속성을 얻는데, 기본적으로 DefaultErrorAttributes로부터 반환할 정보를 가져온다. DefaultErrorAttributes는 전체 항목들에서 설정에 맞게 불필요한 속성들을 제거한다.
+
+![[Pasted image 20240615082957.png]]
+
+# 2. 스프링이 제공하는 다양한 예외 처리 방법
+
+try-catch를 모든 코드에 붙이는 것은 너어무 비효율적이다. 
+스프링에서는 이 문제를 어떻게 해결을 하였나? (error는 메인 로직과 떼어서 보자)
+"Cross-cutting-concerns" 
+=> 예외 처리 전략을 추상화한 HandlerExceptionResolver 인터페이스
+
+발생한 Exception을 catch하고 HTTP 상태나 응답 메시지를 설정한다. 그래서 WAS에서는 해당 요청이 정상적인 응답인 것으로 인식이 되고 복잡한 WAS의 에러 전달이 진행되지 않는다. 
+
+
+![[Pasted image 20240617151948.png]]
+Object 타입인 handler는 뭘까? -> 예외가 발생한 컨트롤러 객체이다. 
+예외가 던져지면 dispatcher servlet까지 전달이 되는데 적합한 예외 처리를 위해서 HandlerExceptionResolver 구현체들을 빈으로 등록해서 관리한다. 
+아래 우선순위대로 4가지 구현체들이 빈으로 등록이 되어있다. 
+
+- DefaultErrorAttributes : 에러 속성을 저장하며 직접 예외를 처리하지는 않는다. 
+- ExceptionHandlerExceptionResolver : 에러 응답을 위한 Controller나 ControllerAdvice에 있는 ExceptionHandler를 처리한다. 
+- ResponseStatusExceptionResolver  : HTTP 상태 코드를 지정하는 @ResponseStatus 또는 ResponseStatusException를 처리한다. 
+- DefaultHandlerExceptionResolver : 스프링 내부의 기본 예외들을 처리한다. 
+
+spring은 ExceptionResolver를 동작시켜서 에러를 처리한다
+방식
+- ResponseStatus
+- ResponseStatusException
+- ExceptionHandler
+- ControllerAdvice, RestControllerAdvice
+
+### ResponseStatus
+에러 HTTP 상태를 변경하도록 도와주는 어노테이션이다. 
+- Exception 클래스 자체
+- 메소드에 @ExceptionHandler와 함께
+- 클래스에 @RestControllerAdvice와 함께
+
+![[Pasted image 20240617154203.png]]
+이렇게 만든 클래스에 @ResponseStatus로 응답 상태를 지정해줄 수 있다. 
+
+이렇게 되면 ResponseStatusExceptionResolver가 지정해준 상태로 에러 응답이 내려가도록 처리한다. 
+
+![[Pasted image 20240617154336.png]]
+
+이는 BasicErrorController에 의한 응답이다. 
+@ResponseStatus를 처리하는 ResponseStatusExceptionResolver는 WAS까지 예외를 전달하고 복잡한 WAS의 에러 요청 전달이 진행되는 것이다. 
+
+**한계점**
+- 에러 응답의 내용(Payload)를 수정할 수 없다. (DefaultErrorAttribure를 수정하면 가능하기는 하다. )
+- 예외 클래스와 강하게 결합되어 같은 예외는 같은 상태, 같은 에러메시지를 반환한다. 
+- 별도의 응답이 필요하다면 예외 클래스를 추가해야한다. (어노테이션을 붙이는 형식이니까)
+- WAS까지 예외가 전달이 되고, WAS의 에러 요청 전달이 진행된다. 
+- 외부에서 정의한 Exception 클래스에는 @ResponseStatus를 붙여줄 수 없다. 
+
+
+### ResponseStatusException
+외부 라이브러리에서 정의한 코드는 우리가 수정할 수 없으므로 @ResponseStatus를 붙여줄 수 없다. Spring5에는 @ResponseStatus의 프로그래밍적 대안으로써 손쉽게 에러를 반환할 수 있는 ResponseStatusException이 추가 되었다. 
+
+ResponseStatusException는 HttpStatus와 함께 선택적으로 reason과 cause를 추가할 수 있고, 언체크 예외을 상속받고 있어 명시적으로 에러를 처리해주지 않아도 된다. 이러한 ResponseStatusException은 다음과 같이 사용할 수 있다.
+
+![[Pasted image 20240617155847.png]]
+
+언체크 예외 : `RuntimeException`을 상속받는다. 즉, 컴파일 타임에 예외 처리를 강제하지 않는다. 예를 들어 try-catch블록으로 명시적으로 예외를 처리하지 않아도 된다. 
+
+@ResponseStatus와 동일하게 예외가 발생하면 ResponseStatusExceptionResolver가 에러를 처리한다. ResponseStatusException를 사용하면 다음과 같은 이점을 누릴 수 있다.
+
+- 기본적인 예외 처리를 빠르게 적용할 수 있으므로 손쉽게 프로토타이핑할 수 있음
+- HttpStatus를 직접 설정하여 예외 클래스와의 결합도를 낮출 수 있음
+- 불필요하게 많은 별도의 예외 클래스를 만들지 않아도 됨
+- 프로그래밍 방식으로 예외를 직접 생성하므로 예외를 더욱 잘 제어할 수 있음
+
+하지만 그럼에도 불구하고 ResponseStatusException는 다음과 같은 한계점들을 가지고 있다. 이러한 이유로 API 에러 처리를 위해서는 @ExceptionHandler를 사용하는 방식이 더 많이 사용된다.
+
+- 직접 예외 처리를 프로그래밍하므로 일관된 예외 처리가 어려움
+- 예외 처리 코드가 중복될 수 있음
+- Spring 내부의 예외를 처리하는 것이 어려움
+- 예외가 WAS까지 전달되고, WAS의 에러 요청 전달이 진행됨
+
+ExceptionHandler와 RestControllerAdvice는 맨 아라애 정리해두었다. 
+
 # Spring의 의존성 주입
 
 ## 의존성 주입이 필요한 이유
@@ -171,6 +302,11 @@ public class IndexController {
 ![[Pasted image 20240611133013.png]]
 이렇게 보내주면 되겠냐? 사용자가 사용하는데 불편하잖아 
 
+@ExceptionHandler는 다음에 어노테이션을 추가함으로써 에러를 손쉽게 처리할 수 있다. 
+- 컨트롤러의 메서드
+- @ControllerAdvice나 @RestControllerAdvice 있는 메서드 
+얘는 ExceptionHandlerExceptionResolver에 의해 처리된다. 
+
 ==try-catch 구문을 작성하는 것이 아닌== @ExceptionHandler를 사용한다. 
 
 ```java
@@ -187,6 +323,56 @@ public ResponseEntity<String> handleNoSuchElementFoundException(ArithmeticExcept
 ```
 위와같이 @ExceptionHandler 어노테이션이 붙은 메서드를 추가해서 에러를 처리하고 발생한 예외는 ExceptionHandlerExceptionResolver에 의해 처리가 된다.
 
+@ExceptionHandler는 Exception 클래스들을 속성으로 받아 처리할 예외를 지정할 수 있다. 만약 ExceptionHandler 어노테이션에 예외 클래스를 지정하지 않는다면, 파라미터에 설정된 에러 클래스를 처리하게 된다. 또한 @ResponseStatus와도 결합가능한데,  만약 ResponseEntity에서도 status를 지정하고 @ResponseStatus도 있다면 ResponseEntity가 우선순위를 갖는다.
+
+ExceptionHandler는 @ResponseStatus와 달리 에러 응답(payload)을 자유롭게 다룰 수 있다는 점에서 유연하다. 예를 들어 응답을 다음과 같이 정의해서 내려준다면 좋을 것이다.
+
+- code: 어떠한 종류의 에러가 발생하는지에 대한 에러 코드
+- message: 왜 에러가 발생했는지에 대한 설명
+- erros: 어느 값이 잘못되어 @Valid에 의한 검증이 실패한 것인지를 위한 에러 목록
+
+--위의 설명 추가--
+- **Exception 클래스 지정**: `@ExceptionHandler`는 속성으로 예외 클래스를 받아 처리할 예외를 지정할 수 있습니다. 예를 들어, `@ExceptionHandler(NullPointerException.class)`는 `NullPointerException`이 발생했을 때 해당 메서드를 호출합니다.
+    
+- **파라미터에 설정된 예외 처리**: 만약 `@ExceptionHandler` 어노테이션에 예외 클래스를 지정하지 않으면, 메서드의 파라미터로 설정된 예외 클래스를 처리하게 됩니다. 즉, 파라미터에 어떤 예외 클래스가 설정되었느냐에 따라 처리할 예외가 결정됩니다.
+    
+- **@ResponseStatus와 결합**: `@ResponseStatus`는 특정 예외가 발생했을 때 반환할 HTTP 상태 코드를 지정할 수 있습니다. 이를 통해 예외가 발생했을 때 클라이언트에게 반환할 상태 코드를 설정할 수 있습니다.
+
+```java
+@RestController
+public class MyController {
+
+    @GetMapping("/example")
+    public String example() {
+        if (someCondition) {
+            throw new NullPointerException("Example NullPointerException");
+        }
+        return "Success";
+    }
+
+    // 특정 예외를 처리하는 메서드
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<String> handleNullPointerException(NullPointerException ex) {
+        return new ResponseEntity<>("Handled NullPointerException: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    // 모든 예외를 처리하는 메서드
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<String> handleAllExceptions(Exception ex) {
+        return new ResponseEntity<>("Handled Exception: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+
+```
+
+Spring은 예외가 발생하면 가장 구체적인 예외 헨들러를 먼저 찾고 없으면 부모 예외의 핸들러를 찾는다. 
+ex) NullPointerException이 발생했다면, 위에서는 NullPointerException 처리기가 없으므로 Exception에 대한 처리기가 찾아진다.
+
+==주의점==
+@ExceptionHandler에 등록된 예외 클래스와 파라미터로 받는 예외 클래스가 동일해야 한다는 것이다. 만약 값이 다르다면 스프링은 컴파일 시점에 에러를 내지 않다가 런타임 시점에 에러를 발생시킨다.
+
+
 **장점**
 HttpServletRequest나 WebRequest 등을 얻을 수 있으며 반환 타입으로는 ResponseEntity, String, void 등 자유롭게 활용할 수 있다.
 
@@ -194,3 +380,64 @@ HttpServletRequest나 WebRequest 등을 얻을 수 있으며 반환 타입으로
 - `@ExceptionHandler`는 특정 컨트롤러에서만 발생하는 예외만 처리하기 때문에 여러 Controller에서 발생하는 **에러 처리 코드가 중복**될 수 있으며, 
 - 사용자의 요청과 응답을 처리하는 Controller의 기능에 **예외처리 코드가 섞이며 단일 책임 원칙(SRP)가 위배**되게 됩니다.
 
+### @ControllerAdvice와 @RestControllerAdvice
+
+==전역적으로== @ExceptionHandler를 적용할 수 있는 방법이다. 
+
+두개의 차이는 @Controller와 @RestController와 같이 @ResponseBoy가 붙어 있는 응답을 Json으로 내려준다는 점에서 다르다. 
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@ControllerAdvice
+@ResponseBody
+public @interface RestControllerAdvice {
+    ...
+}
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Component
+public @interface ControllerAdvice {
+    ...
+}
+```
+
+ControllerAdvice는 여러 컨트롤러에 대해 전역적으로 ExceptionHandler를 적용해준다. 위에서 보이듯 ControllerAdvice 어노테이션에는 @Component 어노테이션이 있어서 ControllerAdvice가 선언된 클래스는 스프링 빈으로 등록된다. 
+
+그러므로 우리는 다음과 같이 전역적으로 에러를 핸들링하는 클래스를 만들어 어노테이션을 붙여주면 에러 처리를 위임할 수 있다.
+
+@interface는 사용자 정의 어노테이션을 정의할 때 사용된다. 
+어노테이션은 메타 데이터를 코드에 첨부하는 방법으로, 주로 컴파일러에게 정보를 제공하거나 런타임 시 특정 동작을 수행하기 위해 사용된다. 
+
+ControllerAdvice는 여러 컨트롤러에 대해 전역적으로 ExceptionHandler를 적용해준다. 위에서 보이듯 ControllerAdvice 어노테이션에는 @Component 어노테이션이 있어서 ControllerAdvice가 선언된 클래스는 스프링 빈으로 등록된다. 그러므로 우리는 다음과 같이 전역적으로 에러를 핸들링하는 클래스를 만들어 어노테이션을 붙여주면 에러 처리를 위임할 수 있다.
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NoSuchElementFoundException.class)
+    protected ResponseEntity<?> handleNoSuchElementFoundException(NoSuchElementFoundException e) {
+        final ErrorResponse errorResponse = ErrorResponse.builder()
+                .code("Item Not Found")
+                .message(e.getMessage()).build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+}
+
+```
+
+### 스프링의 예외처리 흐름
+
+앞서 설명하였듯 다음과 같은 예외 처리기들은 스프링의 빈으로 등록되어 있고, 예외가 발생하면 순차적으로 다음의 Resolver들이 처리가능한지 판별한 후에 예외가 처리된다.
+
+1. ExceptionHandlerExceptionResolver: 에러 응답을 위한 Controller나 ControllerAdvice에 있는 ExceptionHandler를 처리함
+2. ResponseStatusExceptionResolver: Http 상태 코드를 지정하는 @ResponseStatus 또는 ResponseStatusException를 처리함
+3. DefaultHandlerExceptionResolver:  스프링 내부의 기본 예외들을 처리한다.
+
+![[Pasted image 20240617162932.png]]
+
+[추가 참고](https://mangkyu.tistory.com/205)
