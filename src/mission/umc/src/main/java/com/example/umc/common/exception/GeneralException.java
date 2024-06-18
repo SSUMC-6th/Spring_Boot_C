@@ -1,8 +1,8 @@
 package com.example.umc.common.exception;
 
 
-import com.example.umc.common.error.BaseErrorCode;
-import com.example.umc.common.error.ErrorReasonDTO;
+import com.example.umc.domain.maaping.error.BaseErrorCode;
+import com.example.umc.domain.maaping.error.ErrorReasonDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

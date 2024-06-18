@@ -1,4 +1,4 @@
-package com.example.umc.common.error;
+package com.example.umc.domain.maaping.error;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -1,7 +1,7 @@
 package com.example.umc.common;
 
-import com.example.umc.common.error.BaseCode;
-import com.example.umc.common.error.status.SuccessStatus;
+import com.example.umc.domain.maaping.error.BaseCode;
+import com.example.umc.domain.maaping.error.status.SuccessStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

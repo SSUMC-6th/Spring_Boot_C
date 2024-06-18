@@ -2,8 +2,8 @@ package com.example.umc.common.exception;
 
 
 import com.example.umc.common.BaseResponse;
-import com.example.umc.common.error.ErrorReasonDTO;
-import com.example.umc.common.error.status.ErrorStatus;
+import com.example.umc.domain.maaping.error.ErrorReasonDTO;
+import com.example.umc.domain.maaping.error.status.ErrorStatus;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -25,6 +25,7 @@ import java.util.Optional;
 
 
 @Slf4j
+//RestController에서 발생하는 예외를 전역적으로 처리한다.
 @RestControllerAdvice(annotations = {RestController.class})
 public class ExceptionAdvice extends ResponseEntityExceptionHandler {
 
@@ -56,6 +57,7 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
         return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, ErrorStatus.valueOf("_BAD_REQUEST"), request, errors);
     }
 
+    //모든 일반적인 예외를 처리한다.
     @ExceptionHandler
     public ResponseEntity<Object> exception(Exception e, WebRequest request) {
         e.printStackTrace();
@@ -63,6 +65,7 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
         return handleExceptionInternalFalse(e, ErrorStatus._INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, ErrorStatus._INTERNAL_SERVER_ERROR.getHttpStatus(),request, e.getMessage());
     }
 
+    //GeneralException을 처리한다.
     @ExceptionHandler(value = GeneralException.class)
     public ResponseEntity onThrowException(GeneralException generalException, HttpServletRequest request) {
         ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();

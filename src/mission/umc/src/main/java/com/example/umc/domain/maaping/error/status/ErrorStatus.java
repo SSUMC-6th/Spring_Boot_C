@@ -1,8 +1,8 @@
-package com.example.umc.common.error.status;
+package com.example.umc.domain.maaping.error.status;
 
 
-import com.example.umc.common.error.BaseErrorCode;
-import com.example.umc.common.error.ErrorReasonDTO;
+import com.example.umc.domain.maaping.error.BaseErrorCode;
+import com.example.umc.domain.maaping.error.ErrorReasonDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -26,7 +26,8 @@ public enum ErrorStatus implements BaseErrorCode {
 
 
     // test
-    TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트");
+    TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트"),
+    FRONTEND_ERROR(HttpStatus.BAD_REQUEST, "FRONTEND4001", "이거는 무조건 프론트 잘못.");
 
 
     private final HttpStatus httpStatus;

@@ -1,8 +1,8 @@
-package com.example.umc.common.error.status;
+package com.example.umc.domain.maaping.error.status;
 
-import com.example.umc.common.error.BaseCode;
+import com.example.umc.domain.maaping.error.BaseCode;
 
-import com.example.umc.common.error.ReasonDTO;
+import com.example.umc.domain.maaping.error.ReasonDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
