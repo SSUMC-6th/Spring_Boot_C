@@ -24,6 +24,11 @@ public enum ErrorStatus implements BaseErrorCode {
     NICKNAME_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "MEMBER4003", "중복된 닉네임 입니다."),
     MEMBER_NOT_FOUND_OR_PASSWORD_ERROR(HttpStatus.BAD_REQUEST, "MEMBER4004", "없는 사용자이거나 비밀번호가 틀렸습니다."),
 
+    // 가게 관련 에러
+    STORE_NOT_FOUND(HttpStatus.BAD_REQUEST, "STORE4001", "가게가 없습니다."),
+
+    //지역 관련 에러
+    REGION_NOT_FOUND(HttpStatus.BAD_REQUEST, "REGION4001", "지역이 없습니다."),
 
     // test
     TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트"),

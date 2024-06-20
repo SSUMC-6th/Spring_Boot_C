@@ -1,7 +1,8 @@
-package com.example.umc.validation;
+package com.example.umc.validation.validator;
 
 import com.example.umc.domain.maaping.error.status.ErrorStatus;
 import com.example.umc.repository.FoodCategoryRepository;
+import com.example.umc.validation.annotation.ExistCategories;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
