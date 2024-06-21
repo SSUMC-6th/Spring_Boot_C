@@ -30,6 +30,10 @@ public enum ErrorStatus implements BaseErrorCode {
     //지역 관련 에러
     REGION_NOT_FOUND(HttpStatus.BAD_REQUEST, "REGION4001", "지역이 없습니다."),
 
+    // 미션 관련 에러
+    MISSION_NOT_FOUND(HttpStatus.BAD_REQUEST, "MISSION4001", "미션을 찾을 수 없습니다."),
+    MISSION_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "MISSION4002", "이미 존재하는 미션입니다."),
+
     // test
     TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트"),
     FRONTEND_ERROR(HttpStatus.BAD_REQUEST, "FRONTEND4001", "이거는 무조건 프론트 잘못.");
