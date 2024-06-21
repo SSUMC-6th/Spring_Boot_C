@@ -4,6 +4,7 @@ import com.example.umc.domain.Member;
 import com.example.umc.domain.Review;
 import com.example.umc.domain.Store;
 import com.example.umc.validation.annotation.ExistStore;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class CreateReviewRequest {
     private String title;
 
     @NotNull(message = "리뷰 평점은 필수입니다.")
+    @Min(value = 2, message = "리뷰 평점은 2점 이상이어야 합니다.")
     private Float score;
 
     @NotNull(message = "회원 ID는 필수입니다.")

@@ -28,7 +28,7 @@ public class ReviewController {
             responses = @ApiResponse(responseCode = "200", description = "리뷰를 생성합니다")
     )
     @PostMapping
-    public BaseResponse<ReviewResponseDto> addReview(@Valid @RequestBody CreateReviewRequest createReviewRequest) {
+    public BaseResponse<ReviewResponseDto> addReview(@RequestBody @Valid CreateReviewRequest createReviewRequest) {
 
         ReviewResponseDto createdReviewDto = reviewService.addReview(createReviewRequest);
         return BaseResponse.onSuccess(createdReviewDto);
