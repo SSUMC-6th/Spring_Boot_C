@@ -28,6 +28,7 @@ public class CreateMissionRequest {
         private String missionSpec;
 
         @ExistStore
+        @Schema(description = "가게 ID", example = "1")
         @NotNull(message = "가게 ID는 필수입니다.")
         private Long storeId;
 
