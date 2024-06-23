@@ -2,7 +2,7 @@ package com.example.umc.web.controller;
 
 import com.example.umc.common.BaseResponse;
 import com.example.umc.service.TestService;
-import com.example.umc.web.dto.TestResponse;
+import com.example.umc.web.dto.reponse.TestResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
