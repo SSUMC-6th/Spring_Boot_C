@@ -5,6 +5,7 @@ import com.example.umc.service.MemberService;
 import com.example.umc.service.ReviewService;
 import com.example.umc.validation.annotation.AlreadyExistMission;
 import com.example.umc.validation.annotation.ExistMission;
+import com.example.umc.web.dto.reponse.MissionResponseDto;
 import com.example.umc.web.dto.reponse.ReviewResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,9 +33,15 @@ public class MemberController {
 
     }
 
+    @Operation(summary = "회원의 리뷰 조회")
     @GetMapping("/get/review/{memberId}")
     public BaseResponse<Page<ReviewResponseDto>> getReview(@PathVariable Long memberId, Pageable pageable){
         return BaseResponse.onSuccess(reviewService.getReviewsByMemberId(memberId, pageable));
+    }
+
+    @GetMapping("/get/missions/{memberId}")
+    public BaseResponse<Page<MissionResponseDto>> getMissionsByMemberId(@PathVariable Long memberId, Pageable pageable){
+        return BaseResponse.onSuccess(memberService.getMissionsByMemberId(memberId, pageable));
     }
 
 }

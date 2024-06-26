@@ -1,6 +1,7 @@
 package com.example.umc.web.dto.reponse;
 
 import com.example.umc.domain.Mission;
+import com.example.umc.domain.maaping.MemberMission;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +28,14 @@ public class MissionResponseDto {
                 .id(mission.getId())
                 .reward(mission.getReward())
                 .deadline(mission.getDeadline())
+                .build();
+    }
+
+    public static MissionResponseDto fromMemberMissionEntity(MemberMission memberMission) {
+        return MissionResponseDto.builder()
+                .id(memberMission.getMission().getId())
+                .reward(memberMission.getMission().getReward())
+                .deadline(memberMission.getMission().getDeadline())
                 .build();
     }
 
