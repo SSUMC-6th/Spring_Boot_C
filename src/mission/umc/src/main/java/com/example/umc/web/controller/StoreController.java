@@ -2,6 +2,7 @@ package com.example.umc.web.controller;
 
 import com.example.umc.common.BaseResponse;
 import com.example.umc.service.StoreService;
+import com.example.umc.web.dto.reponse.MissionResponseDto;
 import com.example.umc.web.dto.reponse.StoreResponseDto;
 import com.example.umc.web.dto.request.CreateStoreRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,10 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/store")
@@ -32,4 +32,14 @@ public class StoreController {
         StoreResponseDto createdStoreDto = storeService.addStoreToRegion(createStoreRequest);
         return BaseResponse.onSuccess(createdStoreDto);
     }
+
+    @Operation(
+            summary = "가게 미션 조회",
+            responses = @ApiResponse(responseCode = "200", description = "가게의 미션을 조회합니다")
+    )
+    @GetMapping("/get/missions/{storeId}")
+    public BaseResponse<Page<MissionResponseDto>> getMissionsByStoreId(@PathVariable Long storeId, Pageable pageable){
+        return BaseResponse.onSuccess(storeService.getMissionsByStoreId(storeId, pageable));
+    }
+
 }
