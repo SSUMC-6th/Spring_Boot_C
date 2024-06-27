@@ -10,6 +10,8 @@ import com.example.umc.web.dto.reponse.ReviewResponseDto;
 import com.example.umc.web.dto.request.CreateReviewRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,5 +36,11 @@ public class ReviewService {
         Review savedReview = reviewRepository.save(review);
 
         return ReviewResponseDto.fromEntity(savedReview);
+    }
+
+    public Page<ReviewResponseDto> getReviewsByMemberId(Long memberId, Pageable pageable){
+        Page<Review> reviews = reviewRepository.findByMemberId(memberId, pageable);
+
+        return reviews.map(ReviewResponseDto::fromEntity);
     }
 }

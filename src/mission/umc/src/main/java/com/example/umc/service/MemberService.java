@@ -8,8 +8,11 @@ import com.example.umc.repository.MemberMissionRepository;
 import com.example.umc.repository.MemberRepository;
 import com.example.umc.repository.MissionRepository;
 import com.example.umc.validation.annotation.ExistMission;
+import com.example.umc.web.dto.reponse.MissionResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -34,5 +37,9 @@ public class MemberService {
 
         member.getMemberMissionList().add(memberMission);
         memberMissionRepository.save(memberMission);
+    }
+
+    public Page<MissionResponseDto> getMissionsByMemberId(Long memberId, Pageable pageable) {
+        return memberMissionRepository.findByMemberId(memberId, pageable).map(MissionResponseDto::fromMemberMissionEntity);
     }
 }
