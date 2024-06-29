@@ -39,6 +39,7 @@ public class MemberController {
         return BaseResponse.onSuccess(reviewService.getReviewsByMemberId(memberId, pageable));
     }
 
+
     @GetMapping("/get/missions/{memberId}")
     public BaseResponse<Page<MissionResponseDto>> getMissionsByMemberId(@PathVariable Long memberId, Pageable pageable){
         return BaseResponse.onSuccess(memberService.getMissionsByMemberId(memberId, pageable));
