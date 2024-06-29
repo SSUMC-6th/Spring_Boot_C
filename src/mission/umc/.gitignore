@@ -37,4 +37,4 @@ out/
 .vscode/
 
 application.yml
-application-security.yml
+application-secret.yml
